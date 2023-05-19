@@ -147,31 +147,65 @@ int num_processes = 0;
 
 				//break;
 			}
-			//Request for Jobs
+			// Request for Jobs
 			case 'Q': {
-				struct Command* info = command;
+			struct Command* info = command;
 
-				struct Job* job = newJob(info);
-				//use if statement to compare number of devices - number of devices used greater than or equal to used devices
-				if((system->totalDevice - system->curDevice) >= system->curDevice){
-					
-				}
-				//push that job into ready queue; else if # of devices = to need, running job pushed into waiting queue
-
-				//break;
-
+			struct Job* job = newJob(info);
+			// Check if the number of available devices is greater than or equal to the requested devices
+			if ((system->totalDevice - system->curDevice) >= job->devices) {
+				// Push the job into the ready queue
+				pushQueue(system->readyQueue, job);
+				// Update the device count
+				system->curDevice += job->devices;
+			} else {
+				// Push the job into the wait queue
+				pushQueue(system->waitQueue, job);
+			}
+			break;
 			}
 
+			// Release of Devices
 			case 'L': {
+			struct Command* info = command;
 
-				//break;
+			struct Job* job = findJob(system->readyQueue, info->jobId);
+			if (job != NULL) {
+				// Release the requested devices
+				job->devices -= info->devices;
+				// Check if any jobs in the wait queue can be allocated their last requested devices
+				struct Job* current = system->waitQueue.head;
+				struct Job* next;
+				while (current != NULL) {
+				next = current->next;
+				if (current->devices <= (system->totalDevice - system->curDevice)) {
+					// Allocate the last requested devices to the job
+					pushQueue(system->readyQueue, current);
+					system->curDevice += current->devices;
+					removeJob(system->waitQueue, current);
+				}
+				current = next;
+				}
+			}
+			break;
 			}
 
+			// Delete a Job
 			case 'D': {
+			struct Command* info = command;
 
-				//break;
-
+			struct Job* job = findJob(system->readyQueue, info->jobId);
+			if (job != NULL) {
+				// Remove the job from the ready queue
+				removeJob(system->readyQueue, job);
+				// Deallocate the devices
+				system->curDevice -= job->devices;
+				// Free the job memory
+				free(job);
 			}
+			break;
+			}
+
 
 			default : 
 			//printf("broken line");
