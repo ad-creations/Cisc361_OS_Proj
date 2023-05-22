@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "Job.h"
 #include "command.h"
+#include "System.h"
 
 //creates a new job from a command
 struct Job* newJob(struct Command* c){
@@ -43,7 +44,7 @@ struct Queue* newQueue(int type){
 
 //push job to queue
 void pushQueue(struct Queue* q, struct Job* j){
-    if(q->head = NULL){
+    if(q->head == NULL){
         q->head = j;
         q->tail = j;
         return;

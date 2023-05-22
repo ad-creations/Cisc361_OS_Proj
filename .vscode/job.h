@@ -13,9 +13,9 @@ struct Job{
     int jobId;
     int priority;
     int needMemory;
-    int needDevice;
-    //int holdDevice;
-    //int requestDevice;
+    int needDevice; 
+    int holdDevice; //allocation
+    int requestDevice; //max
     int totalTime;
     int burstTime;
     int leftTime;
@@ -41,4 +41,4 @@ struct Job* popQueue(struct Queue* q);
 int emptyQueue(struct Queue* q);
 void displayJob(struct Job* j, int type);
 
-#endif /*JOB_H*/
+#endif

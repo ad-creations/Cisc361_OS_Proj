@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Device.h"
-#include "Job.h"
+#include "Job.c"
+#include "System.c"
 #include "System.h"
+#include "Job.h"
 
 //#ifdef COMMAND_H
 //#define COMMAND_H
+#include "command.c"
 #include "command.h"
 //#endif 
 
@@ -56,7 +58,28 @@ int num_processes = 0;
 		}
 	} */
 
-
+int getInternalEventTime(struct System* s, int quantum, int time_passed)
+{
+    // this function gets the time of the next internal event(i.e. running a job on the CPU). this time
+    // is then compared to the next instruction read time. internal events are prioritized.
+    if (s->readyQueue == NULL)
+    {
+        // if ready_queue mt, we need to read a new instruction so internal_event_time needs to be > next_instruction_time so we set internal_event_time to be arbitrary large number
+        return 9999999;
+    }
+    else
+    {
+        if (s->readyQueue->head->leftTime + quantum <= s->readyQueue->head->burstTime)
+        {
+            return time_passed + quantum;
+        }
+        else
+        {
+            // process will not finish quantum and we need to return curr time +remaining burstTime
+            return time_passed + (s->readyQueue->head->burstTime - s->readyQueue->head->leftTime);
+        }
+    }
+}
 
  int main(){
 	//struct Devices tmp;
@@ -76,7 +99,6 @@ int num_processes = 0;
 
 	//reading through each line
 	while (fgets(file, sizeof(file), ptr) != NULL){
-
 		//call parsing functions and then push to queue
 		struct Command* command = parseCommand(file);
 
@@ -100,6 +122,13 @@ int num_processes = 0;
 				system->totalDevice = info->devices;
 				system->curDevice = system->totalDevice;
 				system->timeQuantum = info->quantum;
+
+				printf("Systems: total memory: %d\n", system->totalMemory);
+				printf("Systems: quantum: %d\n", system->timeQuantum);
+				printf("Systems: time : %d\n", system->time);
+
+
+
 
 				printf("Made system\n");
 
@@ -147,72 +176,47 @@ int num_processes = 0;
 
 				//break;
 			}
-			// Request for Jobs
+			//Request for Jobs
 			case 'Q': {
-			struct Command* info = command;
+				struct Command* info = command;
 
-			struct Job* job = newJob(info);
-			// Check if the number of available devices is greater than or equal to the requested devices
-			if ((system->totalDevice - system->curDevice) >= job->devices) {
-				// Push the job into the ready queue
-				pushQueue(system->readyQueue, job);
-				// Update the device count
-				system->curDevice += job->devices;
-			} else {
-				// Push the job into the wait queue
-				pushQueue(system->waitQueue, job);
-			}
-			break;
-			}
+				struct Job* job = newJob(info);
+				printf("in queue case");
+				//compare number of devices & number of devices to push that job into ready queue; else if # of devices = to need, running job pushed into waiting queue
+				if(job->jobId == system->running->jobId && (system->totalDevice + system->curDevice) <= system->running->needDevice){
+					requestDevice(system, info, num_processes);
+					printf("if statement in queue");
+				}
 
-			// Release of Devices
+				//break;
+
+			}
+			//Release job
 			case 'L': {
-			struct Command* info = command;
+				struct Command* info = command;
 
-			struct Job* job = findJob(system->readyQueue, info->jobId);
-			if (job != NULL) {
-				// Release the requested devices
-				job->devices -= info->devices;
-				// Check if any jobs in the wait queue can be allocated their last requested devices
-				struct Job* current = system->waitQueue.head;
-				struct Job* next;
-				while (current != NULL) {
-				next = current->next;
-				if (current->devices <= (system->totalDevice - system->curDevice)) {
-					// Allocate the last requested devices to the job
-					pushQueue(system->readyQueue, current);
-					system->curDevice += current->devices;
-					removeJob(system->waitQueue, current);
+				struct Job* job = newJob(info);
+				if (job->jobId == system->running->jobId && (system->totalDevice + system->curDevice) <= system->running->holdDevice){
+					releaseDevice(system, info);
 				}
-				current = next;
-				}
-			}
-			break;
+
+				//break;
 			}
 
-			// Delete a Job
 			case 'D': {
-			struct Command* info = command;
+				//printAtTime(system);
+				//break;
 
-			struct Job* job = findJob(system->readyQueue, info->jobId);
-			if (job != NULL) {
-				// Remove the job from the ready queue
-				removeJob(system->readyQueue, job);
-				// Deallocate the devices
-				system->curDevice -= job->devices;
-				// Free the job memory
-				free(job);
 			}
-			break;
-			}
-
 
 			default : 
-			//printf("broken line");
+			printf("broken line");
 			return 0;
 
-		}
+		 }
 	}
+	printAtTime(system,system->curDevice, used_memory,system->time,current_time, system->totalMemory, system->totalDevice );
+
 	printf("outside while loop");
 	return 0;
 }
