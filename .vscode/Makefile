@@ -6,10 +6,10 @@ BIN = ../BIN
 all:  main
 
 run:  main
-	./$(BIN)/main.exe
+	./main.exe
 
 main: $(SRCS)
-	$(CC) $(CFLAGS) -o $(BIN)/main.exe $(SRCS)
+	$(CC) $(CFLAGS) -o main.exe $(SRCS)
 clean:
-	rm BIN/*.o
-	rm BIN/*.exe
+	rm *.o
+	rm *.exe
