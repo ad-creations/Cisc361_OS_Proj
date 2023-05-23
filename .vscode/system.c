@@ -5,33 +5,29 @@
 #include "job.h"
 #include "command.h"
 
-
-struct System* newSystem(struct Command* c){
-    //crete a new system
+struct System* newSystem(struct Command* c) {
     struct System* system = (struct System*)malloc(sizeof(struct System));
 
-    //initialize
     system->time = 0;
-    system ->totalMemory = -1;
+    system->totalMemory = -1;
     system->curMemory = -1;
-    system -> totalDevice = -1;
-    system-> curDevice = -1;
-    system -> timeQuantum = -1;
-    system -> holdQueue1 = newQueue(1); //SJF
-    system -> holdQueue2 = newQueue(2); //FIFO
+    system->totalDevice = -1;
+    system->curDevice = -1;
+    system->timeQuantum = -1;
+    system->holdQueue1 = newQueue(1);
+    system->holdQueue2 = newQueue(2);
     system->waitQueue = newQueue(-1);
-    system-> readyQueue = newQueue(-1);
-    system->leaveQueue= newQueue(-1);
-    system->running =0;
+    system->readyQueue = newQueue(-1);
+    system->leaveQueue = newQueue(-1);
+    system->running = NULL;
     system->startTime = 0;
 
     return system;
-};
+}
 
 void arriveJob(struct System* s, struct Job* job) {
     if (job->needMemory > s->totalMemory || job->needDevice > s->totalDevice) {
         printf("Job %d is rejected, resource is not enough\n", job->jobId);
-        freeJob(job);
     } else if (s->curMemory >= job->needMemory) {
         printf("Adding job %d to ready queue\n", job->jobId);
         pushQueue(s->readyQueue, job);
@@ -50,123 +46,100 @@ void arriveJob(struct System* s, struct Job* job) {
     }
 }
 
-
-void scheduleQueue(struct System* s){
-    //move jobs from hold to ready queue
-    while((s->holdQueue1->size != 0)){
+void scheduleQueue(struct System* s) {
+    while (s->holdQueue1->size != 0) {
         struct Job* j = popQueue(s->holdQueue1);
         pushQueue(s->readyQueue, j);
     }
 
-    while((s->holdQueue2->size != 0)){
+    while (s->holdQueue2->size != 0) {
         struct Job* j = popQueue(s->holdQueue2);
         pushQueue(s->readyQueue, j);
     }
-};
+}
 
-void moveOutHold(struct System* s){
-    //move jobs from hold to leave queue
-    while ((s->holdQueue1->size != 0)){
-            struct Job* j = popQueue(s->holdQueue1);
-            pushQueue(s->leaveQueue, j);
-        }
-        
-        while ((s->holdQueue2->size != 0)) {
-            struct Job* j = popQueue(s->holdQueue2);
-            pushQueue(s->leaveQueue, j);
-        }
-};
-
-void moveReadyToRunning(struct System* s){
-    //move jobs from ready to running state
-    // if(s->running == NULL && (s->readyQueue->size != 0)){
-    //     s->running = popQueue(s->readyQueue);
-    //     s->startTime = s->time;
-    // }
-
-    //roudn robin way?
-      // Check if a job is running on the CPU
-    if (s->running != NULL) {
-        // Execute the job for the time quantum
-        s->running->leftTime -= s->timeQuantum;
-
-        // Check if the job has completed
-        if (s->running->leftTime <= 0) {
-            // Set the leave time for the completed job
-            s->running->leaveTime = s->time;
-
-            // Move the completed job to the leave queue
-            pushQueue(s->leaveQueue, s->running);
-            s->running = NULL;
-        } else {
-            // Move the job to the end of the ready queue
-            pushQueue(s->readyQueue, s->running);
-            s->running = NULL;
-        }
+void moveOutHold(struct System* s) {
+    while (s->holdQueue1->size != 0) {
+        struct Job* j = popQueue(s->holdQueue1);
+        pushQueue(s->leaveQueue, j);
     }
-};
 
+    while (s->holdQueue2->size != 0) {
+        struct Job* j = popQueue(s->holdQueue2);
+        pushQueue(s->leaveQueue, j);
+    }
+}
 
-void jobComplete(struct System* s){
-    //move completed job from running state to leave queue
-    if(s->running == NULL){
+void moveReadyToRunning(struct System* s) {
+    if (s->running == NULL) {
         return;
     }
-    
+
+    s->running->leftTime -= s->timeQuantum;
+
+    if (s->running->leftTime <= 0) {
+        s->running->leaveTime = s->time;
+        pushQueue(s->leaveQueue, s->running);
+        s->running = NULL;
+    } else {
+        pushQueue(s->readyQueue, s->running);
+        s->running = NULL;
+    }
+}
+
+
+void jobComplete(struct System* s) {
+    if (s->running == NULL) {
+        return;
+    }
+
     pushQueue(s->leaveQueue, s->running);
     s->running = NULL;
+}
 
-};
-
-void moveWaitToReady(struct System* s){
-    //move job from wait queue to ready queue
-    if ((s->waitQueue->size != 0)) {
+void moveWaitToReady(struct System* s) {
+    if (s->waitQueue->size != 0) {
         struct Job* j = popQueue(s->waitQueue);
         pushQueue(s->readyQueue, j);
     }
-};
+}
 
-void moveRunningToReady(struct System* s){
-    //move running job to ready queue
+void moveRunningToReady(struct System* s) {
     if (s->running == NULL) {
         return;
-        
     }
+
     pushQueue(s->readyQueue, s->running);
     s->running = NULL;
+}
 
-};
-
-void moveRunningToWait(struct System* s){
-    //move running job to wait queue
+void moveRunningToWait(struct System* s) {
     if (s->running == NULL) {
         return;
     }
+
     pushQueue(s->waitQueue, s->running);
     s->running = NULL;
-};
+}
 
-void requestDevice(struct System* s, struct Command* c, int numProcesses){
-    int safe = bankers(s,c,numProcesses);
-    if(safe == 1){
-        c->devices += s -> curDevice;
+void requestDevice(struct System* s, struct Command* c, int numProcesses) {
+    int safe = bankers(s, c, numProcesses);
+    if (safe == 1) {
+        c->devices += s->curDevice;
         s->curDevice -= c->devices;
         pushQueue(s->readyQueue, s->running);
-         }
-    else{
-        //if no availible devices push job to wait queue
-        pushQueue(s->waitQueue, s->running); //this might wrong
+    } else {
+        pushQueue(s->waitQueue, s->running);
     }
-};
+}
 
-void releaseDevice(struct System* s, struct Command* c){
-    //release device and icnrement availible device count
+void releaseDevice(struct System* s, struct Command* c) {
     s->totalDevice += c->devices;
     s->running->holdDevice -= c->devices;
 
-    pushQueue(s->readyQueue,s->running);
+    pushQueue(s->readyQueue, s->running);
     s->running = NULL;
-};
+}
 
 
 int bankers(struct System* s, struct Command* c, int numProcesses) {

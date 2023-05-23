@@ -14,39 +14,30 @@ int used_memory = 0;
 int num_processes = 0;
 int used_devices = 0;
 
-int getInternalEventTime(struct System* s, int quantum, int time_passed)
-{
-    // this function gets the time of the next internal event(i.e. running a job on the CPU). this time
-    // is then compared to the next instruction read time. internal events are prioritized.
-    if (s->readyQueue == NULL)
-    {
-        // if ready_queue mt, we need to read a new instruction so internal_event_time needs to be > next_instruction_time so we set internal_event_time to be arbitrary large number
+int getInternalEventTime(struct System* s, int quantum, int time_passed) {
+    if (s->readyQueue == NULL) {
+        // If ready_queue is empty, set internal_event_time to a large number to prioritize reading a new instruction.
         return 9999999;
-    }
-    else
-    {
-        if (s->readyQueue->head->leftTime + quantum <= s->readyQueue->head->burstTime)
-        {
+    } else {
+        if (s->readyQueue->head->leftTime + quantum <= s->readyQueue->head->burstTime) {
+            // Process will finish within the quantum.
             return time_passed + quantum;
-        }
-        else
-        {
-            // process will not finish quantum and we need to return curr time +remaining burstTime
+        } else {
+            // Process will not finish within the quantum, return current time + remaining burst time.
             return time_passed + (s->readyQueue->head->burstTime - s->readyQueue->head->leftTime);
         }
     }
 }
 
 int main() {
-    struct System* system = (struct System*)malloc(sizeof(struct System));
-
+    struct System* system = malloc(sizeof(struct System));
     system->holdQueue1 = newQueue(1);
     system->holdQueue2 = newQueue(2);
     system->readyQueue = newQueue(1);
     system->waitQueue = newQueue(2);
     system->leaveQueue = newQueue(2);
 
-    char* file = (char*)malloc(sizeof(char) * MAX_FILE_SIZE);
+    char* file = malloc(sizeof(char) * MAX_FILE_SIZE);
     FILE* ptr = fopen("i0.txt", "r");
 
     if (ptr == NULL) {
@@ -59,7 +50,7 @@ int main() {
 
         switch (command->type) {
             case 'C': {
-                printf("-----Configuring----\n");
+                printf("-----Configuration-----\n");
                 system->time = command->time;
                 printf("Time: %d\n", system->time);
 
@@ -67,20 +58,20 @@ int main() {
                 printf("Memory: %d\n", system->totalMemory);
 
                 system->curMemory = system->totalMemory;
-                printf("Curr Memory: %d\n", system->curMemory);
+                printf("Current Memory: %d\n", system->curMemory);
 
                 system->totalDevice = command->devices;
-                printf("Total Device: %d\n", system->totalDevice);
+                printf("Total Devices: %d\n", system->totalDevice);
 
                 system->curDevice = system->totalDevice;
-                printf("Curr Device: %d\n", system->curDevice);
+                printf("Current Devices: %d\n", system->curDevice);
 
                 system->timeQuantum = command->quantum;
-                printf("Quantum: %d\n", system->timeQuantum);
+                printf("Time Quantum: %d\n", system->timeQuantum);
 
-                printf("Systems: total memory: %d\n", system->totalMemory);
-                printf("Systems: quantum: %d\n", system->timeQuantum);
-                printf("Systems: time: %d\n", system->time);
+                printf("Systems: Total Memory: %d\n", system->totalMemory);
+                printf("Systems: Quantum: %d\n", system->timeQuantum);
+                printf("Systems: Time: %d\n", system->time);
 
                 free(command);
                 break;
@@ -88,10 +79,9 @@ int main() {
             case 'A': {
                 struct Job* job = newJob(command);
                 if (job->needMemory > system->totalMemory || job->needDevice > system->totalDevice) {
-                    printf("job is rejected, resource is not enough\n");
-                }
-                else if (system->curMemory >= job->needMemory) {
-                    printf("adding job to ready queue\n");
+                    printf("Job is rejected. Resources are not enough.\n");
+                } else if (system->curMemory >= job->needMemory) {
+                    printf("Adding job to ready queue.\n");
                     pushQueue(system->readyQueue, job);
                     printf("Added Job %d\n", job->jobId);
 
@@ -99,25 +89,18 @@ int main() {
                     available_memory = system->totalMemory - used_memory;
 
                     printf("Used memory: %d\n", used_memory);
-                }
-                else {
+                } else {
                     if (job->priority == 1) {
-                        printf("Adding %d to Hold Queue 1\n", job->jobId);
+                        printf("Adding %d to Hold Queue 1.\n", job->jobId);
                         pushQueue(system->holdQueue1, job);
-                        printf("Done Adding SJF!\n");
-                    }
-                    else {
-                        printf("Adding %d to Hold Queue 2\n", job->jobId);
-                        printf("Memory needed: %d, Available: %d,\n", job->needMemory, system->totalMemory - used_memory);
+                        printf("Done Adding to SJF!\n");
+                    } else {
+                        printf("Adding %d to Hold Queue 2.\n", job->jobId);
+                        printf("Memory needed: %d, Available: %d\n", job->needMemory, system->totalMemory - used_memory);
                         pushQueue(system->holdQueue2, job);
-                        printf("Done adding FIFO!\n");
+                        printf("Done Adding to FIFO!\n");
                     }
-                    free(command);
-                    break;
                 }
-
-                printAtTime(system, available_memory, used_devices);
-
                 free(command);
                 break;
             }
@@ -145,12 +128,12 @@ int main() {
                 break;
             }
             default:
-                printf("broken line");
+                printf("Broken line.\n");
                 break;
         }
     }
 
-    printf("outside while loop");
+    printf("Outside while loop.\n");
     fclose(ptr);
     free(system->holdQueue1);
     free(system->holdQueue2);

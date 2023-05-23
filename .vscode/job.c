@@ -51,25 +51,27 @@ void pushQueue(struct Queue* q, struct Job* j) {
     if (q->head == NULL) {
         q->head = j;
         q->tail = j;
-    } else if (q->queueType == 1) { // SJF
-        struct Job* curr = q->head;
-        struct Job* prev = NULL;
+    } else {
+        if (q->queueType == 1) { // SJF
+            struct Job* curr = q->head;
+            struct Job* prev = NULL;
 
-        while (curr != NULL && j->burstTime >= curr->burstTime) {
-            prev = curr;
-            curr = curr->next;
-        }
+            while (curr != NULL && j->burstTime >= curr->burstTime) {
+                prev = curr;
+                curr = curr->next;
+            }
 
-        if (prev == NULL) {
-            j->next = curr;
-            q->head = j;
-        } else {
-            j->next = curr;
-            prev->next = j;
+            if (prev == NULL) {
+                j->next = curr;
+                q->head = j;
+            } else {
+                j->next = curr;
+                prev->next = j;
+            }
+        } else if (q->queueType == 2) { // FIFO
+            q->tail->next = j;
+            q->tail = j;
         }
-    } else if (q->queueType == 2) { // FIFO
-        q->tail->next = j;
-        q->tail = j;
     }
 }
 

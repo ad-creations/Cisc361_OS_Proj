@@ -19,7 +19,7 @@ int parseParameter(char* line, char* type, int* num, int start) {
     i += 2;
 
     *num = 0;
-    while (!isspace(line[i]) && line[i] != '\0' && line[i] != '\n') {
+    while (isdigit(line[i])) {
         *num = (*num * 10) + (line[i] - '0');
         i++;
     }
@@ -70,7 +70,8 @@ struct Command* parseCommand(char* line) {
                 cmd->runTime = param_value;
                 break;
             default:
-                fprintf(stderr, "Error: invalid parameter type %c\n", param_type);
+                fprintf(stderr, "Error: invalid parameter type '%c'\n", param_type);
+                free(cmd);
                 exit(1);
         }
 
