@@ -1,91 +1,110 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "Job.h"
+#include "job.h"
 #include "command.h"
+#include "system.h"
 
-//creates a new job from a command
-struct Job* newJob(struct Command* c){
-    struct Job* newJob = (struct Job*)malloc(sizeof(struct Job));
-    //does set job based on command
-    if(newJob == NULL){
+// Create a new job from a command
+struct Job* newJob(struct Command* c) {
+    struct Job* newJob = malloc(sizeof(struct Job));
+    if (newJob == NULL) {
         return NULL;
     }
     newJob->next = NULL;
+    newJob->jobId = c->jobId;
+    newJob->priority = c->priority;
+    newJob->burstTime = c->runTime;
+    newJob->needMemory = c->memory;
+    newJob->needDevice = c->devices;
     return newJob;
 }
 
-//display details of a job
-void displayJob(struct Job* j, int type){
-    if(type == 1){
-        printf("Type: SJF");
-    }
-    else if (type == 2){
-        printf("Typle: FIFO");
-    }
-    else{
-        printf("Invalid");
+// Display details of a job
+void displayJob(struct Job* j, int type) {
+    switch (type) {
+        case 1:
+            printf("Type: SJF\n");
+            break;
+        case 2:
+            printf("Type: FIFO\n");
+            break;
+        default:
+            printf("Invalid\n");
+            break;
     }
 }
 
-//creates a new queue of jobs
-struct Queue* newQueue(int type){
-    struct Queue* newQueue = (struct Queue*)malloc(sizeof(struct Queue));
-    if ( newQueue == NULL){
+// Create a new queue of jobs
+struct Queue* newQueue(int type) {
+    struct Queue* newQueue = malloc(sizeof(struct Queue));
+    if (newQueue == NULL) {
         return NULL;
     }
     newQueue->head = NULL;
     newQueue->tail = NULL;
-    newQueue-> queueType = type;
+    newQueue->queueType = type;
     return newQueue;
 }
 
-
-
-//push job to queue
-void pushQueue(struct Queue* q, struct Job* j){
-    if(q->head = NULL){
+// Push a job to the queue
+void pushQueue(struct Queue* q, struct Job* j) {
+    if (q->head == NULL) {
         q->head = j;
         q->tail = j;
-        return;
-    }
-    if(q->queueType == 1){ // 1: SJF 2:FIFO
-        struct Job* s = q->head;
-        //need to find right position to intsert
-        while(s->next != NULL){
-            if(j->totalTime >= s-> totalTime && j->totalTime < s->next->totalTime){
-                j->next = s->next;
-                s->next = j;
-                return;
+    } else {
+        if (q->queueType == 1) { // SJF
+            struct Job* curr = q->head;
+            struct Job* prev = NULL;
+
+            while (curr != NULL && j->burstTime >= curr->burstTime) {
+                prev = curr;
+                curr = curr->next;
             }
-            s = s->next;
+
+            if (prev == NULL) {
+                j->next = curr;
+                q->head = j;
+            } else {
+                j->next = curr;
+                prev->next = j;
+            }
+        } else if (q->queueType == 2) { // FIFO
+            q->tail->next = j;
+            q->tail = j;
         }
-        q->tail->next=j;
-        q->tail = j;
-    }
-    else if(q->queueType == 2){ // 1: SJF 2:FIFO
-        q->tail->next = j;
-        q->tail=j;
     }
 }
 
-//removes the first job from a queue
-struct Job* popQueue(struct Queue* q){
-    if (q == NULL){
+// Remove the first job from the queue
+struct Job* popQueue(struct Queue* q) {
+    if (q == NULL || q->head == NULL) {
         return NULL;
     }
+
     struct Job* remove = q->head;
-    q->head= q->head->next;
-    remove->next=NULL;
-    if(q->head == NULL){
+    q->head = q->head->next;
+    remove->next = NULL;
+
+    if (q->head == NULL) {
         q->tail = NULL;
     }
+
     return remove;
 }
 
-//check if queue is empty
-int emptyQueue(struct Queue*q){
-    if(q->head == NULL){
-        return 1;
+// Check if the queue is empty
+int emptyQueue(struct Queue* q) {
+    return (q == NULL || q->head == NULL);
+}
+
+void printQueue(struct Queue* queue) {
+    printf("---------printing queue------\n");
+    struct Job* curr = queue->head;
+
+    while (curr != NULL) {
+        printf("JobNumber: %d with remaining %d\n", curr->jobId, curr->burstTime - curr->leftTime);
+        curr = curr->next;
     }
-    return 0;
+
+    printf("----------------------------\n");
 }
