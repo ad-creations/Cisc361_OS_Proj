@@ -212,82 +212,102 @@ int bankers(struct System* s, struct Command* c, int numProcesses) {
     return 0;
 }
 
+#include <stdio.h>
+
+// Function to print the current status of the scheduler at a given time
 int printAtTime(struct System *s, int availableMem, int availableDevices)
-// Prints current status of scheduler at a given time.
 {
-    int sum = 0;
-    int count = 0;
-    printf("At Time %d: \nCurrent Available Main Memory=%d \nCurrent Devices=%d \n", s->time, s->totalMemory-availableMem, s->totalDevice-availableDevices);
-    printf("-----------------------------------------------------------------\n");
-    // Prints all of the finish jobs. TODO Jobs need Arrival Time and Finish Time  to show correct values.
+    int sum = 0; // Sum of turnaround times
+    int count = 0; // Number of completed jobs
+
+    // Print current available memory and devices
+    printf("At Time %d:\n", s->time);
+    printf("Current Available Main Memory: %d\n", s->totalMemory - availableMem);
+    printf("Current Devices: %d\n", s->totalDevice - availableDevices);
+    printf("-------------------------------------------------\n");
+
+    // Print completed jobs
     printf("Completed Jobs:\n");
     struct Job *job = s->leaveQueue->head;
     while (job != NULL)
     {
-        sum = sum + (job->leaveTime - job->arrivalTime);
+        sum += (job->leaveTime - job->arrivalTime);
         count++;
-        printf("Job ID: %d Arrival Time: %d Finish Time: %d Turn Around Time: %d\n",
-               job->jobId, job->arrivalTime, job->leaveTime, (job->leftTime - job->arrivalTime));
+        printf("Job ID: %d\n", job->jobId);
+        printf("Arrival Time: %d\n", job->arrivalTime);
+        printf("Finish Time: %d\n", job->leaveTime);
+        printf("Turn Around Time: %d\n", (job->leftTime - job->arrivalTime));
+        printf("---------------------------------------\n");
 
         job = job->next;
     }
-    printf("-----------------------------------------------------------------\n");
-    // Prints all currently Hold Queue 1
-    printf("Hold Queue 1: \n --------------------\n");
-    //holdQueue1 = s->holdQueue1->head;
+    printf("-------------------------------------------------\n");
+
+    // Print jobs in Hold Queue 1
+    printf("Hold Queue 1:\n");
     job = s->holdQueue1->head;
     while (job != NULL)
     {
-        //hold_queue1 = hold_queue1->head;
-        printf("Job ID: %d Run Time: %d \n", job->jobId, job->burstTime);
+        printf("Job ID: %d\n", job->jobId);
+        printf("Run Time: %d\n", job->burstTime);
+        printf("---------------------------------------\n");
+
         job = job->next;
     }
-    printf("-------------------------------------------------------------------\n");
-    // Prints all currently on Hold Queue 2
-    printf("Hold Queue 2: \n --------------------\n");
+    printf("-------------------------------------------------\n");
+
+    // Print jobs in Hold Queue 2
+    printf("Hold Queue 2:\n");
     job = s->holdQueue2->head;
     while (job != NULL)
     {
-        printf("Job ID: %d Run Time: %d \n", job->jobId, job->burstTime);
+        printf("Job ID: %d\n", job->jobId);
+        printf("Run Time: %d\n", job->burstTime);
+        printf("---------------------------------------\n");
+
         job = job->next;
     }
+    printf("-------------------------------------------------\n");
 
-    printf("---------------------------------------------------------------\n");
-    // Prints all  currently Ready Queue; TODO Needs Time Accrued value
-    printf("Ready Queue: \n ---------------------------------\n");
+    // Print jobs in Ready Queue
+    printf("Ready Queue:\n");
     job = s->readyQueue->head;
     while (job != NULL)
     {
-        printf("Job ID: %d Run Time: %d Time Accrued: %d\n", job->jobId, job->burstTime, job->totalTime);
+        printf("Job ID: %d\n", job->jobId);
+        printf("Run Time: %d\n", job->burstTime);
+        printf("Time Accrued: %d\n", job->totalTime);
+        printf("---------------------------------------\n");
+
         job = job->next;
     }
-    printf("---------------------------------------------------------------------------\n");
-    // Prints all  currently Wait Queue; TODO Needs Time Accrued value
-    printf("Wait Queue: \n ---------------------------------\n");
+    printf("-------------------------------------------------\n");
+
+    // Print jobs in Wait Queue
+    printf("Wait Queue:\n");
     job = s->waitQueue->head;
     while (job != NULL)
     {
-        printf("Job ID: %d Run Time: %d Time Accrued: %d\n", job->jobId, job->burstTime, job->totalTime);
+        printf("Job ID: %d\n", job->jobId);
+        printf("Run Time: %d\n", job->burstTime);
+        printf("Time Accrued: %d\n", job->totalTime);
+        printf("---------------------------------------\n");
+
         job = job->next;
     }
-    printf("---------------------------------------------------------------------------\n");
-    // Prints all process on CPU; TODO needs Time Accrued and Time Left value; currently time left
-    // is burstTime-Accrued this will only work if burstTime is updated while on CPU (decreases with time on CPU)
-    printf("Running on CPU: \n---------------------------------\n");
-    /* job = s->running;
-    if(job != NULL){
-        if(time_passed!=0){
-    printf("Job ID: %d Time Accrued: %d Time Left: %d\n", job->jobId, job->totalTime+(time-time_passed), (job->burstTime - (job->totalTime+(time-time_passed))));
-        }else{
-           printf("Job ID: %d Time Accrued: %d Time Left: %d\n", job->jobId, job->totalTime+(time-job->arrivalTime), (job->burstTime - (job->totalTime+(time-job->arrivalTime)))); 
-        }
-    } */
-    printf("---------------------------------------------------------------------------\n");
-    // Calculates the average turnaround time of the jobs on the finished queue
-    float turnaround=0.0;
-    if(count>0){
-        turnaround=(float)sum/count;
+    printf("-------------------------------------------------\n");
+
+    // Print job running on CPU
+    printf("Running on CPU:\n");
+    printf("-------------------------------------------------\n");
+
+    // Calculate and print the average turnaround time
+    float turnaround = 0.0;
+    if (count > 0)
+    {
+        turnaround = (float)sum / count;
     }
-    printf("System Turnaround Time: %.2f\n\n",turnaround);
+    printf("System Turnaround Time: %.2f\n\n", turnaround);
+
     return 0;
 }
