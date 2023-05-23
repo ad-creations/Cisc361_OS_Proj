@@ -1,8 +1,10 @@
 #include "utils.h"
 #include <stdbool.h>
+#include <vector>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 
 const bool DEBUG = false;
 
