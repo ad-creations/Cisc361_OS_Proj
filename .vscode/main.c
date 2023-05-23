@@ -59,7 +59,7 @@ int getInternalEventTime(struct System* s, int quantum, int time_passed)
 	//char file[MAX_FILE_SIZE];
 
 	//opening file
-	FILE* ptr = fopen("i0.txt", "r");
+	FILE* ptr = fopen("i1.txt", "r");
 
 
 	if(ptr == NULL){
@@ -68,10 +68,10 @@ int getInternalEventTime(struct System* s, int quantum, int time_passed)
 	}
 
 	//reading through each line
-	while (fgets(file, sizeof(file), ptr) != NULL){
+	while (fgets(file, MAX_FILE_SIZE, ptr) != NULL){
 		//call parsing functions and then push to queue
 		struct Command* command = parseCommand(file);
-		system = newSystem(command);
+		//system = newSystem(command);
 
 		switch (command->type){
 			//System Config
