@@ -89,15 +89,3 @@ struct Command* parseCommand(char* line) {
 
     return cmd;
 }
-
-
-
-/* int main(){
-
-    return 0;
-} */
-
-
-
-
-

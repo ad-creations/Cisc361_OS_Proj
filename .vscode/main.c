@@ -222,6 +222,3 @@ int getInternalEventTime(struct System* s, int quantum, int time_passed)
     free(system);
 	return 0;
 }
-
-
-
