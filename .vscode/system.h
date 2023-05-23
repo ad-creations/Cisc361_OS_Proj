@@ -9,7 +9,7 @@ struct System{
     int time; //current time
     int totalMemory;
     int curMemory;
-    int totalDevice;
+    int totalDevice; //availible = total - curr
     int curDevice;
     int timeQuantum;
     struct Queue* holdQueue1;
@@ -32,7 +32,10 @@ void jobComplete(struct System* s);
 void moveWaitToReady(struct System* s);
 void moveRunningToReady(struct System* s);
 void moveRunningToWait(struct System* s);
-void requestDevice(struct System* s, struct Command* c);
+void requestDevice(struct System* s, struct Command* c, int numProcesses);
 void releaseDevice(struct System* s, struct Command* c);
+int bankers(struct System* s, struct Command* c, int numProcesses);
+int printAtTime(struct System *s, int availableMem, int availableDevices);
+
 
 #endif
