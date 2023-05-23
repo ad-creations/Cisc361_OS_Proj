@@ -1,4 +1,4 @@
-#include "Job.h"
+#include "job.h"
 #include "command.h"
 
 //typedef struct System System;
